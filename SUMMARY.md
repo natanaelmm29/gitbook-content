@@ -1,16 +1,27 @@
 # Table of contents
 
-## Group 1
+## Linux Machines
 
-* [Malware Analysis and Engineering](README.md)
-  * [Basic Static Analysis - Day 1](group-1/malware-analysis-and-engineering/basic-static-analysis-day-1.md)
-  * [Dynamic Analysis - Day 3](group-1/malware-analysis-and-engineering/dynamic-analysis-day-3.md)
-  * [Dynamic Analysis - Day 4](group-1/malware-analysis-and-engineering/dynamic-analysis-day-4.md)
+* [OpenAdmin](README.md)
+* [Cap](linux-machines/cap.md)
+* [Networked](linux-machines/networked.md)
+* [Bashed](linux-machines/bashed.md)
+* [Mirai](linux-machines/mirai.md)
+* [SolidState](linux-machines/solidstate.md)
+* [Traverxec](linux-machines/traverxec.md)
+* [Bucket](linux-machines/bucket.md)
+* [Ready](linux-machines/ready.md)
+* [Magic](linux-machines/magic.md)
+* [Frolic](linux-machines/frolic.md)
+* [Lame](linux-machines/lame.md)
+* [SneakyMailer](linux-machines/sneakymailer.md)
+* [Irked](linux-machines/irked.md)
+* [Sense](linux-machines/sense.md)
 
-## Group 2
+## Windows Machines
 
-* [Computer Forensics](group-2/computer-forensics.md)
-
-***
-
-* [Talk from the CCN](talk-from-the-ccn.md)
+* [Active](windows-machines/active.md)
+* [Jerry](windows-machines/jerry.md)
+* [Servmon](windows-machines/servmon.md)
+* [Legacy](windows-machines/legacy.md)
+* [Bastion](windows-machines/bastion.md)
